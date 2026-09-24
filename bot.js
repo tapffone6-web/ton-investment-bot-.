@@ -3,7 +3,6 @@ const { Telegraf } = require('telegraf');
 const token = process.env.BOT_TOKEN || '8936364037:AAGF6X42O6Hl6pIn_QpHFmLJctXvuBLYbUY';
 const bot = new Telegraf(token);
 
-// إعدادات بوت التيليجرام وأزرار الميني أب
 bot.start((ctx) => {
   ctx.reply('أهلاً بك في منصة استثمار وتعدين عملة TON 💎\n\nاضغط على الزر أدناه لفتح لوحة التحكم والتعدين:', {
     reply_markup: {
@@ -11,7 +10,7 @@ bot.start((ctx) => {
         [
           {
             text: '🚀 فتح منصة الاستثمار',
-            web_app: { url: 'https://ton-investment-bot.github.io/app/' }
+            web_app: { url: 'https://telegram.org' } // مؤقتاً للتأكد من عمل الزر بدون 404
           }
         ],
         [
@@ -25,13 +24,11 @@ bot.start((ctx) => {
   });
 });
 
-// تشغيل البوت مباشرة
 bot.launch().then(() => {
   console.log('Telegram Bot started successfully!');
 }).catch((err) => {
   console.error('Failed to start Telegram bot:', err);
 });
 
-// تفعيل الإغلاق الآمن
 process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));
