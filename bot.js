@@ -2,21 +2,27 @@ const { Telegraf } = require('telegraf');
 const express = require('express');
 const path = require('path');
 
-const bot = new Telegraf(process.env.BOT_TOKEN);
+const token = process.env.BOT_TOKEN;
+if (!token) {
+  console.error('BOT_TOKEN is missing!');
+  process.exit(1);
+}
+
+const bot = new Telegraf(token);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// السماح بقراءة ملفات الويب
+// قراءة الملفات الثابتة (مثل index.html)
 app.use(express.static(__dirname));
 
-// تشغيل صفحة الويب عندما يدخل المستخدم على الرابط العام
+// مسار الويب الأساسي لعرض صفحة الميني أب
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// رسالة البدء في البوت وأزرار الميني أب
+// إعدادات بوت التيليجرام وأزرار الميني أب
 bot.start((ctx) => {
-  ctx.reply('أهلاً بك يا Make في منصة استثمار وتعدين عملة TON 💎\n\nمن خلال هذا البوت، يمكنك استثمار أموالك، متابعة أرباحك اليومية، وسحب أرباحك بكل سهولة.', {
+  ctx.reply('أهلاً بك في منصة استثمار وتعدين عملة TON 💎\n\nاضغط على الزر أدناه لفتح لوحة التحكم والتعدين:', {
     reply_markup: {
       inline_keyboard: [
         [
@@ -27,7 +33,7 @@ bot.start((ctx) => {
         ],
         [
           {
-            text: '📢 قناة التحديثات والفعاليات',
+            text: '📢 قناة التحديثات',
             url: 'https://t.me/MoneyVault10'
           }
         ]
@@ -36,8 +42,14 @@ bot.start((ctx) => {
   });
 });
 
-bot.launch();
-
+// تشغيل سيرفر الويب أولاً ليجيب على طلبات Railway فوراً
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Web Server is running and listening on port ${PORT}`);
+  
+  // تشغيل البوت بعد نجاح تشغيل السيرفر
+  bot.launch().then(() => {
+    console.log('Telegram Bot started successfully!');
+  }).catch((err) => {
+    console.error('Failed to start Telegram bot:', err);
+  });
 });
