@@ -10,6 +10,8 @@ if (!token) {
 
 const bot = new Telegraf(token);
 const app = express();
+
+// استخدام البورت الذي يحدده Railway تلقائياً أو 3000 محلياً
 const PORT = process.env.PORT || 3000;
 
 // قراءة الملفات الثابتة (مثل index.html)
@@ -42,11 +44,11 @@ bot.start((ctx) => {
   });
 });
 
-// تشغيل سيرفر الويب أولاً ليجيب على طلبات Railway فوراً
+// تشغيل سيرفر الويب أولاً والاستماع على جميع واجهات الشبكة 0.0.0.0
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Web Server is running and listening on port ${PORT}`);
+  console.log(`Server is running and listening on port ${PORT}`);
   
-  // تشغيل البوت بعد نجاح تشغيل السيرفر
+  // تشغيل البوت بعد نجاح إقلاع السيرفر
   bot.launch().then(() => {
     console.log('Telegram Bot started successfully!');
   }).catch((err) => {
