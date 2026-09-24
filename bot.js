@@ -1,26 +1,7 @@
 const { Telegraf } = require('telegraf');
-const express = require('express');
-const path = require('path');
 
-const token = process.env.BOT_TOKEN;
-if (!token) {
-  console.error('BOT_TOKEN is missing!');
-  process.exit(1);
-}
-
+const token = process.env.BOT_TOKEN || '8936364037:AAGF6X42O6Hl6pIn_QpHFmLJctXvuBLYbUY';
 const bot = new Telegraf(token);
-const app = express();
-
-// استخدام البورت الذي يحدده Railway تلقائياً أو 3000 محلياً
-const PORT = process.env.PORT || 3000;
-
-// قراءة الملفات الثابتة (مثل index.html)
-app.use(express.static(__dirname));
-
-// مسار الويب الأساسي لعرض صفحة الميني أب
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
 
 // إعدادات بوت التيليجرام وأزرار الميني أب
 bot.start((ctx) => {
@@ -30,7 +11,7 @@ bot.start((ctx) => {
         [
           {
             text: '🚀 فتح منصة الاستثمار',
-            web_app: { url: 'https://ton-investment-bot-production.up.railway.app' }
+            web_app: { url: 'https://tapffone6-web.github.io' }
           }
         ],
         [
@@ -44,14 +25,13 @@ bot.start((ctx) => {
   });
 });
 
-// تشغيل سيرفر الويب أولاً والاستماع على جميع واجهات الشبكة 0.0.0.0
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server is running and listening on port ${PORT}`);
-  
-  // تشغيل البوت بعد نجاح إقلاع السيرفر
-  bot.launch().then(() => {
-    console.log('Telegram Bot started successfully!');
-  }).catch((err) => {
-    console.error('Failed to start Telegram bot:', err);
-  });
+// تشغيل البوت مباشرة
+bot.launch().then(() => {
+  console.log('Telegram Bot started successfully!');
+}).catch((err) => {
+  console.error('Failed to start Telegram bot:', err);
 });
+
+// تفعيل الإغلاق الآمن
+process.once('SIGINT', () => bot.stop('SIGINT'));
+process.once('SIGTERM', () => bot.stop('SIGTERM'));
