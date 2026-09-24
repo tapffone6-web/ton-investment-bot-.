@@ -4,13 +4,13 @@ const token = process.env.BOT_TOKEN || '8936364037:AAGF6X42O6Hl6pIn_QpHFmLJctXvu
 const bot = new Telegraf(token);
 
 bot.start((ctx) => {
-  ctx.reply('أهلاً بك في منصة استثمار وتعدين عملة TON 💎\n\nاضغط على الزر أدناه لفتح لوحة التحكم والتعدين:', {
+  ctx.reply('أهلاً بك في منصة استثمار وتعدين عملة TON 💎\n\nاضغط على الزر أدناه لفتح لوحة التحكم والاستثمار:', {
     reply_markup: {
       inline_keyboard: [
         [
           {
             text: '🚀 فتح منصة الاستثمار',
-            web_app: { url: 'https://example.com' }
+            web_app: { url: 'https://tapffone6.github.io/ton-investment-bot/' } // استبدل هذا الرابط برابط مستودعك الصحيح إذا كان مختلفاً
           }
         ],
         [
