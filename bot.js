@@ -3,7 +3,7 @@ const { Telegraf } = require('telegraf');
 const token = process.env.BOT_TOKEN || '8936364037:AAGF6X42O6Hl6pIn_QpHFmLJctXvuBLYbUY';
 const bot = new Telegraf(token);
 
-// إعدادات بوت التيليجرام وزر الميني أب الجاهز للعمل
+// إعدادات بوت التيليجرام وأزرار الميني أب
 bot.start((ctx) => {
   ctx.reply('أهلاً بك في منصة استثمار وتعدين عملة TON 💎\n\nاضغط على الزر أدناه لفتح لوحة التحكم والتعدين:', {
     reply_markup: {
@@ -25,7 +25,7 @@ bot.start((ctx) => {
   });
 });
 
-// تشغيل البوت مباشرة وبدون تعقيدات
+// تشغيل البوت مباشرة
 bot.launch().then(() => {
   console.log('Telegram Bot started successfully!');
 }).catch((err) => {
