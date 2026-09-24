@@ -1,10 +1,22 @@
 const { Telegraf } = require('telegraf');
+const express = require('express');
+const path = require('path');
 
-// استخدام التوكن من متغيرات البيئة التي أضفناها في Railway
 const bot = new Telegraf(process.env.BOT_TOKEN);
+const app = express();
+const PORT = process.env.PORT || 3000;
 
+// السماح بقراءة ملفات الويب
+app.use(express.static(__dirname));
+
+// تشغيل صفحة الويب عندما يدخل المستخدم على الرابط العام
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// رسالة البدء في البوت وأزرار الميني أب
 bot.start((ctx) => {
-  ctx.reply('أهلاً بك يا Make في منصة استثمار وتعدين عملة TON 💎\n\nمن خلال هذا البوت، يمكنك استثمار أموالك، متابعة أرباحك اليومية، وسحب أرباحك بكل سهولة.\n\nاختر أحد الخيارات أدناه للبدء:', {
+  ctx.reply('أهلاً بك يا Make في منصة استثمار وتعدين عملة TON 💎\n\nمن خلال هذا البوت، يمكنك استثمار أموالك، متابعة أرباحك اليومية، وسحب أرباحك بكل سهولة.', {
     reply_markup: {
       inline_keyboard: [
         [
@@ -16,13 +28,7 @@ bot.start((ctx) => {
         [
           {
             text: '📢 قناة التحديثات والفعاليات',
-            url: 'https://t.me/MoneyVault10' // يمكنك تغيير الرابط بقناتك هنا
-          }
-        ],
-        [
-          {
-            text: '💰 رصيدي وأرباحي',
-            callback_data: 'balance'
+            url: 'https://t.me/MoneyVault10'
           }
         ]
       ]
@@ -30,11 +36,7 @@ bot.start((ctx) => {
   });
 });
 
-// التعامل مع زر رصيدي وأرباحي (كمثال)
-bot.action('balance', (ctx) => {
-  ctx.answerCbQuery();
-  ctx.reply('رصيدك الحالي هو: 0 TON');
-});
-
 bot.launch();
-console.log('Bot is running...');
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
