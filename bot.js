@@ -10,7 +10,7 @@ bot.start((ctx) => {
         [
           {
             text: '🚀 فتح منصة الاستثمار',
-            web_app: { url: 'https://html5test.com' }
+            web_app: { url: 'https://example.com' }
           }
         ],
         [
