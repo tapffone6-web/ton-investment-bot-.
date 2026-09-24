@@ -10,7 +10,7 @@ bot.start((ctx) => {
         [
           {
             text: '🚀 فتح منصة الاستثمار',
-            web_app: { url: 'https://tapffone6.github.io/ton-investment-bot/' } // استبدل هذا الرابط برابط مستودعك الصحيح إذا كان مختلفاً
+            web_app: { url: 'https://tapffone6-web.github.io/ton-investment-bot/' }
           }
         ],
         [
