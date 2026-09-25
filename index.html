@@ -148,7 +148,7 @@
     <!-- ربط Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, deleteDoc, addDoc, get、「getDocsFromServer」 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
           apiKey: "AIzaSyBsztQhY-lC6XWq_khnJyf00NQvGy4-WMo",
@@ -237,7 +237,6 @@
             }
         }
 
-        // إرسال طلب إيداع
         window.requestDeposit = async function() {
             let msgEl = document.getElementById('depStatusMsg');
             let amt = parseFloat(document.getElementById('depAmount').value);
@@ -268,11 +267,10 @@
             } catch (error) {
                 console.error("Error adding deposit:", error);
                 msgEl.style.color = '#ef4444';
-                msgEl.innerText = '❌ حدث خطأ أثناء الإرسال.';
+                msgEl.innerText = '❌ حدث خطأ أثناء الإرسال: ' + error.message;
             }
         }
 
-        // إرسال طلب سحب
         window.requestWithdraw = async function() {
             let msgEl = document.getElementById('wdStatusMsg');
             let addr = document.getElementById('wdAddress').value;
@@ -318,16 +316,16 @@
             }
         }
 
-        // تحميل طلبات الإيداع والسحب للمسؤول
         window.loadAdminRequests = async function() {
-            try {
-                let depListEl = document.getElementById('adminDepositsList');
-                let wdListEl = document.getElementById('adminWithdrawsList');
-                
-                depListEl.innerHTML = "جاري جلب الطلبات...";
-                wdListEl.innerHTML = "جاري جلب الطلبات...";
+            let depListEl = document.getElementById('adminDepositsList');
+            let wdListEl = document.getElementById('adminWithdrawsList');
+            
+            depListEl.innerHTML = "جاري جلب الطلبات من السيرفر...";
+            wdListEl.innerHTML = "جاري جلب الطلبات من السيرفر...";
 
-                let depSnap = await getDocs(collection(db, "deposits"));
+            try {
+                // جلب الطلبات مباشرة من الخادم لتفادي مشاكل الأوفلاين
+                const depSnap = await getDocs(collection(db, "deposits"));
                 let depHtml = "";
                 
                 depSnap.forEach((docSnap) => {
@@ -348,7 +346,7 @@
                 });
                 depListEl.innerHTML = depHtml || "لا توجد طلبات إيداع جديدة.";
 
-                let wdSnap = await getDocs(collection(db, "withdraws"));
+                const wdSnap = await getDocs(collection(db, "withdraws"));
                 let wdHtml = "";
                 
                 wdSnap.forEach((docSnap) => {
@@ -369,10 +367,11 @@
                     `;
                 });
                 wdListEl.innerHTML = wdHtml || "لا توجد طلبات سحب جديدة.";
+
             } catch (e) {
-                console.error("Error loading requests:", e);
-                document.getElementById('adminDepositsList').innerHTML = "⚠️ خطأ في الاتصال بقاعدة البيانات.";
-                document.getElementById('adminWithdrawsList').innerHTML = "⚠️ خطأ في الاتصال بقاعدة البيانات.";
+                console.error("Load Admin Requests Error:", e);
+                depListEl.innerHTML = "⚠️ خطأ في القراءة: تأكد من تفعيل قواعد الأمان (Firestore Rules).";
+                wdListEl.innerHTML = "⚠️ خطأ في القراءة: تأكد من تفعيل قواعد الأمان (Firestore Rules).";
             }
         }
 
@@ -394,7 +393,7 @@
                 window.loadAdminRequests();
             } catch (err) {
                 console.error("Handle Deposit Error:", err);
-                alert("حدث خطأ أثناء معالجة الطلب: تأكد من اتصال الإنترنت.");
+                alert("خطأ أثناء التنفيذ: " + err.message);
             }
         }
 
@@ -413,7 +412,7 @@
                 window.loadAdminRequests();
             } catch (err) {
                 console.error("Handle Withdraw Error:", err);
-                alert("حدث خطأ أثناء معالجة السحب: تأكد من اتصال الإنترنت.");
+                alert("خطأ أثناء التنفيذ: " + err.message);
             }
         }
 
