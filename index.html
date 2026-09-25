@@ -148,7 +148,7 @@
     <!-- ربط Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, deleteDoc, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
           apiKey: "AIzaSyBsztQhY-lC6XWq_khnJyf00NQvGy4-WMo",
@@ -179,15 +179,11 @@
         let targetId = null;
         let targetData = null;
 
-        // دالة تبديل الأقسام (تعلّق التنقل تم إصلاحها بالكامل لتكون فورية)
         window.switchTab = function(tabId, btn) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             if (btn) btn.classList.add('active');
-            if (tabId === 'admin-panel' && userId === ADMIN_ID) {
-                loadAdminRequests();
-            }
         };
 
         async function initUser() {
@@ -203,7 +199,7 @@
             }
             updateUI();
             if (userId === ADMIN_ID) {
-                loadAdminRequests();
+                initAdminListeners();
             }
         }
 
@@ -268,10 +264,6 @@
                 document.getElementById('depAmount').value = '';
                 msgEl.style.color = '#22c55e';
                 msgEl.innerText = '✅ تم إرسال طلب الإيداع للمراجعة بنجاح!';
-                
-                if (userId === ADMIN_ID) {
-                    loadAdminRequests();
-                }
             } catch (error) {
                 console.error("Error adding deposit:", error);
                 msgEl.style.color = '#ef4444';
@@ -309,10 +301,6 @@
                     document.getElementById('wdAmount').value = '';
                     msgEl.style.color = '#22c55e';
                     msgEl.innerText = '✅ تم تقديم طلب السحب بنجاح!';
-                    
-                    if (userId === ADMIN_ID) {
-                        loadAdminRequests();
-                    }
                 } catch (error) {
                     console.error("Error adding withdraw:", error);
                     msgEl.style.color = '#ef4444';
@@ -324,20 +312,16 @@
             }
         };
 
-        window.loadAdminRequests = async function() {
+        // تفعيل الاستماع الفعلي لطلبات الإيداع والسحب لكي تظهر دائماً وتتحدث تلقائياً
+        function initAdminListeners() {
             let depListEl = document.getElementById('adminDepositsList');
             let wdListEl = document.getElementById('adminWithdrawsList');
-            
+
             if (!depListEl || !wdListEl) return;
 
-            depListEl.innerHTML = "جاري جلب الطلبات...";
-            wdListEl.innerHTML = "جاري جلب الطلبات...";
-
-            try {
-                const depSnap = await getDocs(collection(db, "deposits"));
+            onSnapshot(collection(db, "deposits"), (snapshot) => {
                 let depHtml = "";
-                
-                depSnap.forEach((docSnap) => {
+                snapshot.forEach((docSnap) => {
                     let d = docSnap.data();
                     let dId = docSnap.id;
                     let uId = d.userId || "غير معروف";
@@ -347,18 +331,18 @@
                         <div style="border-bottom: 1px solid #334155; padding-bottom: 8px; margin-bottom: 8px;">
                             المستخدم: <b>${uId}</b><br>المبلغ: <b>${amt} TON</b><br>
                             <div style="margin-top: 6px;">
-                                <button class="success-btn" onclick="window.handleDeposit('${dId}', '${uId}', ${amt}, true)">قبول</button>
-                                <button class="danger-btn" onclick="window.handleDeposit('${dId}', '${uId}', ${amt}, false)">رفض</button>
+                                <button class="success-btn" onclick="window.handleDeposit('${dId}', '${uId}', ${amt})">قبول</button>
+                                <button class="danger-btn" onclick="window.rejectDeposit('${dId}')">رفض</button>
                             </div>
                         </div>
                     `;
                 });
                 depListEl.innerHTML = depHtml || "لا توجد طلبات إيداع جديدة.";
+            });
 
-                const wdSnap = await getDocs(collection(db, "withdraws"));
+            onSnapshot(collection(db, "withdraws"), (snapshot) => {
                 let wdHtml = "";
-                
-                wdSnap.forEach((docSnap) => {
+                snapshot.forEach((docSnap) => {
                     let w = docSnap.data();
                     let wId = docSnap.id;
                     let uId = w.userId || "غير معروف";
@@ -369,47 +353,51 @@
                         <div style="border-bottom: 1px solid #334155; padding-bottom: 8px; margin-bottom: 8px;">
                             المستخدم: <b>${uId}</b><br>المبلغ: <b>${amt} TON</b><br>العنوان: <span style="color:#facc15">${addr}</span><br>
                             <div style="margin-top: 6px;">
-                                <button class="success-btn" onclick="window.handleWithdraw('${wId}', '${uId}', ${amt}, true)">قبول</button>
-                                <button class="danger-btn" onclick="window.handleWithdraw('${wId}', '${uId}', ${amt}, false)">رفض</button>
+                                <button class="success-btn" onclick="window.handleWithdrawApproval('${wId}', true)">قبول</button>
+                                <button class="danger-btn" onclick="window.handleWithdrawApproval('${wId}', false, '${uId}', ${amt})">رفض وإرجاع</button>
                             </div>
                         </div>
                     `;
                 });
                 wdListEl.innerHTML = wdHtml || "لا توجد طلبات سحب جديدة.";
+            });
+        }
 
-            } catch (e) {
-                console.error("Load Admin Requests Error:", e);
-                depListEl.innerHTML = "لا توجد طلبات معلقة حالياً.";
-                wdListEl.innerHTML = "لا توجد طلبات معلقة حالياً.";
-            }
-        };
-
-        window.handleDeposit = async function(docId, targetUId, amount, isApproved) {
+        window.handleDeposit = async function(docId, targetUId, amount) {
             try {
-                if (isApproved) {
-                    let uRefTarget = doc(db, "users", targetUId.toString());
-                    let uSnap = await getDoc(uRefTarget);
-                    let currentBal = 0;
-                    if (uSnap.exists()) {
-                        currentBal = uSnap.data().balance || 0;
-                        await updateDoc(uRefTarget, { balance: currentBal + amount });
-                    } else {
-                        await setDoc(uRefTarget, { balance: amount, investments: [], isBanned: false });
-                    }
+                let uRefTarget = doc(db, "users", targetUId.toString());
+                let uSnap = await getDoc(uRefTarget);
+                let currentBal = 0;
+                
+                if (uSnap.exists()) {
+                    currentBal = uSnap.data().balance || 0;
+                    await updateDoc(uRefTarget, { balance: currentBal + amount });
+                } else {
+                    await setDoc(uRefTarget, { balance: amount, investments: [], isBanned: false });
                 }
+                
+                // حذف الطلب فوراً من قاعدة البيانات لكي يختفي من القائمة
                 await deleteDoc(doc(db, "deposits", docId));
-                alert(isApproved ? '✅ تم قبول الإيداع وإضافة الرصيد بنجاح.' : '❌ تم رفض الإيداع.');
-                window.loadAdminRequests();
+                alert('✅ تم قبول الإيداع وإضافة الرصيد بنجاح.');
             } catch (err) {
                 console.error("Handle Deposit Error:", err);
-                alert("تم تنفيذ العملية.");
-                window.loadAdminRequests();
+                alert("حدث خطأ أثناء معالجة القبول.");
             }
         };
 
-        window.handleWithdraw = async function(docId, targetUId, amount, isApproved) {
+        window.rejectDeposit = async function(docId) {
+            try {
+                await deleteDoc(doc(db, "deposits", docId));
+                alert('❌ تم رفض وحذف طلب الإيداع.');
+            } catch (err) {
+                console.error("Reject Deposit Error:", err);
+            }
+        };
+
+        window.handleWithdrawApproval = async function(docId, isApproved, targetUId, amount) {
             try {
                 if (!isApproved) {
+                    // إذا تم الرفض، نعيد المبلغ لرصيد المستخدم
                     let uRefTarget = doc(db, "users", targetUId.toString());
                     let uSnap = await getDoc(uRefTarget);
                     if (uSnap.exists()) {
@@ -418,12 +406,10 @@
                     }
                 }
                 await deleteDoc(doc(db, "withdraws", docId));
-                alert(isApproved ? '✅ تم قبول طلب السحب.' : '❌ تم رفض السحب وإرجاع المبلغ للمستخدم.');
-                window.loadAdminRequests();
+                alert(isApproved ? '✅ تم قبول طلب السحب بنجاح.' : '❌ تم رفض السحب وإرجاع المبلغ للمستخدم.');
             } catch (err) {
                 console.error("Handle Withdraw Error:", err);
-                alert("تم تنفيذ العملية.");
-                window.loadAdminRequests();
+                alert("حدث خطأ أثناء معالجة الطلب.");
             }
         };
 
