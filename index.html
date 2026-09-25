@@ -148,7 +148,7 @@
     <!-- ربط Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, deleteDoc, addDoc, get、「getDocsFromServer」 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
           apiKey: "AIzaSyBsztQhY-lC6XWq_khnJyf00NQvGy4-WMo",
@@ -267,7 +267,7 @@
             } catch (error) {
                 console.error("Error adding deposit:", error);
                 msgEl.style.color = '#ef4444';
-                msgEl.innerText = '❌ حدث خطأ أثناء الإرسال: ' + error.message;
+                msgEl.innerText = '❌ حدث خطأ أثناء الإرسال.';
             }
         }
 
@@ -320,11 +320,10 @@
             let depListEl = document.getElementById('adminDepositsList');
             let wdListEl = document.getElementById('adminWithdrawsList');
             
-            depListEl.innerHTML = "جاري جلب الطلبات من السيرفر...";
-            wdListEl.innerHTML = "جاري جلب الطلبات من السيرفر...";
+            depListEl.innerHTML = "جاري جلب الطلبات...";
+            wdListEl.innerHTML = "جاري جلب الطلبات...";
 
             try {
-                // جلب الطلبات مباشرة من الخادم لتفادي مشاكل الأوفلاين
                 const depSnap = await getDocs(collection(db, "deposits"));
                 let depHtml = "";
                 
@@ -370,8 +369,8 @@
 
             } catch (e) {
                 console.error("Load Admin Requests Error:", e);
-                depListEl.innerHTML = "⚠️ خطأ في القراءة: تأكد من تفعيل قواعد الأمان (Firestore Rules).";
-                wdListEl.innerHTML = "⚠️ خطأ في القراءة: تأكد من تفعيل قواعد الأمان (Firestore Rules).";
+                depListEl.innerHTML = "⚠️ خطأ في القراءة.";
+                wdListEl.innerHTML = "⚠️ خطأ في القراءة.";
             }
         }
 
