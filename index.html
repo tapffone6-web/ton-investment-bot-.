@@ -17,118 +17,31 @@
             align-items: center;
             padding-bottom: 70px;
         }
-        .container {
-            width: 100%;
-            max-width: 400px;
-        }
-        .header {
-            background: #1e293b;
-            padding: 15px;
-            border-radius: 12px;
-            text-align: center;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
-        .balance {
-            font-size: 26px;
-            font-weight: bold;
-            color: #4ade80;
-            margin-top: 5px;
-        }
-        .nav-tabs {
-            display: flex;
-            justify-content: space-between;
-            background: #1e293b;
-            padding: 8px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-        }
-        .nav-tab {
-            background: none;
-            border: none;
-            color: #94a3b8;
-            font-size: 13px;
-            cursor: pointer;
-            padding: 8px 10px;
-            border-radius: 6px;
-            font-weight: bold;
-            flex: 1;
-            text-align: center;
-        }
-        .nav-tab.active {
-            background: #0088cc;
-            color: white;
-        }
-        .section {
-            display: none;
-        }
-        .section.active {
-            display: block;
-        }
-        .plan-card, .card-box {
-            background: #1e293b;
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 12px;
-            border: 1px solid #334155;
-        }
-        .plan-title {
-            font-size: 16px;
-            color: #38bdf8;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        .plan-details {
-            font-size: 13px;
-            color: #94a3b8;
-            margin-bottom: 10px;
-            line-height: 1.5;
-        }
-        input {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            background: #0f172a;
-            border: 1px solid #334155;
-            color: white;
-            border-radius: 8px;
-            box-sizing: border-box;
-            font-size: 14px;
-        }
-        button.action-btn {
-            background-color: #0088cc;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            font-size: 14px;
-            border-radius: 8px;
-            cursor: pointer;
-            width: 100%;
-            font-weight: bold;
-        }
+        .container { width: 100%; max-width: 400px; }
+        .header { background: #1e293b; padding: 15px; border-radius: 12px; text-align: center; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .balance { font-size: 26px; font-weight: bold; color: #4ade80; margin-top: 5px; }
+        .nav-tabs { display: flex; justify-content: space-between; background: #1e293b; padding: 8px; border-radius: 10px; margin-bottom: 15px; }
+        .nav-tab { background: none; border: none; color: #94a3b8; font-size: 13px; cursor: pointer; padding: 8px 10px; border-radius: 6px; font-weight: bold; flex: 1; text-align: center; }
+        .nav-tab.active { background: #0088cc; color: white; }
+        .section { display: none; }
+        .section.active { display: block; }
+        .plan-card, .card-box { background: #1e293b; padding: 15px; border-radius: 12px; margin-bottom: 12px; border: 1px solid #334155; }
+        .plan-title { font-size: 16px; color: #38bdf8; font-weight: bold; margin-bottom: 5px; }
+        .plan-details { font-size: 13px; color: #94a3b8; margin-bottom: 10px; line-height: 1.5; }
+        input { width: 100%; padding: 10px; margin: 10px 0; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
+        button.action-btn { background-color: #0088cc; color: white; border: none; padding: 10px 15px; font-size: 14px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; }
         button.action-btn:active { background-color: #006699; }
-        .wallet-address {
-            background: #0f172a;
-            padding: 10px;
-            border-radius: 8px;
-            word-break: break-all;
-            font-size: 12px;
-            color: #facc15;
-            margin: 10px 0;
-            text-align: center;
-        }
+        .wallet-address { background: #0f172a; padding: 10px; border-radius: 8px; word-break: break-all; font-size: 12px; color: #facc15; margin: 10px 0; text-align: center; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <!-- رأس المحفظة -->
         <div class="header">
             <div>رصيد المحفظة المتاح</div>
-            <div class="balance" id="balance">10.00 TON</div>
+            <div class="balance" id="balance">0.00 TON</div>
         </div>
 
-        <!-- أزرار التنقل -->
         <div class="nav-tabs">
             <button class="nav-tab active" onclick="switchTab('plans', this)">الخطط</button>
             <button class="nav-tab" onclick="switchTab('deposit', this)">إيداع</button>
@@ -136,56 +49,53 @@
             <button class="nav-tab" onclick="switchTab('my-investments', this)">استثماراتي</button>
         </div>
 
-        <!-- 1. قسم الخطط الاستثمارية -->
+        <!-- 1. الخطط الاستثمارية الأربع -->
         <div id="plans" class="section active">
             <div class="plan-card">
-                <div class="plan-title">🚀 الخطة الأولى (المبتدئين)</div>
+                <div class="plan-title">🚀 الخطة الأولى</div>
                 <div class="plan-details">الإيداع: 1 TON<br>الربح اليومي: 0.2 TON<br>المدة: 7 أيام</div>
                 <button class="action-btn" onclick="investPlan(1, 'الخطة الأولى', 0.2, 7)">استثمار 1 TON</button>
             </div>
-
             <div class="plan-card">
-                <div class="plan-title">⭐ الخطة الثانية (البرونزية)</div>
+                <div class="plan-title">⭐ الخطة الثانية</div>
                 <div class="plan-details">الإيداع: 3 TON<br>الربح اليومي: 0.4 TON<br>المدة: 10 أيام</div>
                 <button class="action-btn" onclick="investPlan(3, 'الخطة الثانية', 0.4, 10)">استثمار 3 TON</button>
             </div>
-
             <div class="plan-card">
-                <div class="plan-title">💎 الخطة الثالثة (الذهبية)</div>
+                <div class="plan-title">💎 الخطة الثالثة</div>
                 <div class="plan-details">الإيداع: 5 TON<br>الربح اليومي: 0.6 TON<br>المدة: 13 يوماً</div>
                 <button class="action-btn" onclick="investPlan(5, 'الخطة الثالثة', 0.6, 13)">استثمار 5 TON</button>
             </div>
-
             <div class="plan-card">
-                <div class="plan-title">👑 الخطة الرابعة (الحيتان)</div>
+                <div class="plan-title">👑 الخطة الرابعة</div>
                 <div class="plan-details">الإيداع: 7 TON<br>الربح اليومي: 0.8 TON<br>المدة: 15 يوماً</div>
                 <button class="action-btn" onclick="investPlan(7, 'الخطة الرابعة', 0.8, 15)">استثمار 7 TON</button>
             </div>
         </div>
 
-        <!-- 2. قسم الإيداع -->
+        <!-- 2. الإيداع -->
         <div id="deposit" class="section">
             <div class="card-box">
                 <div class="plan-title">💳 إيداع عملة TON</div>
-                <div class="plan-details">قم بتحويل المبلغ إلى عنوان المحفظة أدناه، ثم أرسل إشعار الإيداع:</div>
+                <div class="plan-details">قم بتحويل المبلغ إلى عنوان المحفظة أدناه:</div>
                 <div class="wallet-address">UQA1234567890abcdefTONDepositAddressExample</div>
                 <input type="number" id="depAmount" placeholder="أدخل مبلغ الإيداع (TON)">
                 <button class="action-btn" onclick="requestDeposit()">تأكيد عملية الإيداع</button>
             </div>
         </div>
 
-        <!-- 3. قسم السحب -->
+        <!-- 3. السحب -->
         <div id="withdraw" class="section">
             <div class="card-box">
                 <div class="plan-title">💸 سحب الأرباح</div>
                 <div class="plan-details">الحد الأدنى للسحب: 1 TON</div>
-                <input type="text" id="wdAddress" placeholder="أدخل عنوان محفظتك (TON Address)">
+                <input type="text" id="wdAddress" placeholder="أدخل عنوان محفظتك (TON)">
                 <input type="number" id="wdAmount" placeholder="المبلغ المراد سحبه">
                 <button class="action-btn" onclick="requestWithdraw()">طلب السحب</button>
             </div>
         </div>
 
-        <!-- 4. قسم استثماراتي -->
+        <!-- 4. استثماراتي -->
         <div id="my-investments" class="section">
             <div class="card-box">
                 <div class="plan-title">📊 خططك النشطة</div>
@@ -194,16 +104,49 @@
         </div>
     </div>
 
-    <script>
+    <!-- ربط Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyBsztQhY-lC6XWq_khnJyf00NQvGy4-WMo",
+          authDomain: "tonapp-47f88.firebaseapp.com",
+          projectId: "tonapp-47f88",
+          storageBucket: "tonapp-47f88.firebasestorage.app",
+          messagingSenderId: "945046990809",
+          appId: "1:945046990809:web:876d41713631bf0d7873c8",
+          measurementId: "G-YEV69S7SGJ"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
         let tg = window.Telegram.WebApp;
         tg.expand();
 
-        let balance = parseFloat(localStorage.getItem('inv_balance')) || 10.00;
-        let investments = JSON.parse(localStorage.getItem('my_plans')) || [];
+        let userId = tg.initDataUnsafe?.user?.id ? tg.initDataUnsafe.user.id.toString() : "guest_user";
+        let userRef = doc(db, "users", userId);
 
-        updateUI();
+        let userData = { balance: 10.0, investments: [], isBanned: false };
 
-        function switchTab(tabId, btn) {
+        async function initUser() {
+            let snap = await getDoc(userRef);
+            if (snap.exists()) {
+                userData = snap.data();
+                if (userData.isBanned) {
+                    document.body.innerHTML = "<h2 style='text-align:center; color:red; margin-top:50px;'>عذراً، تم حظر حسابك من قبل الإدارة.</h2>";
+                    return;
+                }
+            } else {
+                await setDoc(userRef, userData);
+            }
+            updateUI();
+        }
+
+        initUser();
+
+        window.switchTab = function(tabId, btn) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
@@ -211,69 +154,68 @@
         }
 
         function updateUI() {
-            document.getElementById('balance').innerText = balance.toFixed(2) + ' TON';
-            
+            document.getElementById('balance').innerText = (userData.balance || 0).toFixed(2) + ' TON';
             let listContainer = document.getElementById('investmentsList');
-            if (investments.length === 0) {
+            if (!userData.investments || userData.investments.length === 0) {
                 listContainer.innerHTML = 'ليس لديك أي استثمارات نشطة حالياً.';
             } else {
-                listContainer.innerHTML = investments.map((inv, index) => `
+                listContainer.innerHTML = userData.investments.map(inv => `
                     <div style="border-bottom: 1px solid #334155; padding-bottom: 8px; margin-bottom: 8px;">
                         <b>${inv.name}</b><br>
                         الإيداع: ${inv.amount} TON<br>
                         الربح اليومي: ${inv.daily} TON<br>
-                        المدة المتبقية: ${inv.days} أيام
+                        المدة: ${inv.days} أيام
                     </div>
                 `).join('');
             }
         }
 
-        function investPlan(amount, name, daily, days) {
-            if (balance >= amount) {
-                balance -= amount;
-                investments.push({ name, amount, daily, days });
-                
-                localStorage.setItem('inv_balance', balance);
-                localStorage.setItem('my_plans', JSON.stringify(investments));
-                
+        window.investPlan = async function(amount, name, daily, days) {
+            if (userData.balance >= amount) {
+                userData.balance -= amount;
+                let newInv = { name, amount, daily, days };
+                if (!userData.investments) userData.investments = [];
+                userData.investments.push(newInv);
+
+                await updateDoc(userRef, {
+                    balance: userData.balance,
+                    investments: userData.investments
+                });
+
                 updateUI();
                 alert('تم تفعيل ' + name + ' بنجاح!');
                 if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
             } else {
                 alert('رصيدك غير كافٍ للاستثمار!');
-                if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
             }
         }
 
-        function requestDeposit() {
-            let amt = document.getElementById('depAmount').value;
+        window.requestDeposit = async function() {
+            let amt = parseFloat(document.getElementById('depAmount').value);
             if (amt && amt > 0) {
-                balance += parseFloat(amt);
-                localStorage.setItem('inv_balance', balance);
+                userData.balance += amt;
+                await updateDoc(userRef, { balance: userData.balance });
                 updateUI();
-                alert('تم محاكاة الإيداع بنجاح وإضافة ' + amt + ' TON لرصيدك!');
+                alert('تم إيداع ' + amt + ' TON بنجاح!');
                 document.getElementById('depAmount').value = '';
             } else {
                 alert('الرجاء إدخال مبلغ صحيح.');
             }
         }
 
-        function requestWithdraw() {
+        window.requestWithdraw = async function() {
             let addr = document.getElementById('wdAddress').value;
             let amt = parseFloat(document.getElementById('wdAmount').value);
-            if (!addr) {
-                alert('الرجاء إدخال عنوان المحفظة.');
-                return;
-            }
-            if (amt && amt >= 1 && balance >= amt) {
-                balance -= amt;
-                localStorage.setItem('inv_balance', balance);
+            if (!addr) { alert('الرجاء إدخال عنوان المحفظة.'); return; }
+            if (amt && amt >= 1 && userData.balance >= amt) {
+                userData.balance -= amt;
+                await updateDoc(userRef, { balance: userData.balance });
                 updateUI();
-                alert('تم إرسال طلب السحب بنجاح إلى المحفظة المحددة!');
+                alert('تم تقديم طلب السحب بنجاح!');
                 document.getElementById('wdAddress').value = '';
                 document.getElementById('wdAmount').value = '';
             } else {
-                alert('تأكد من الرصيد المتاح (الحد الأدنى للسحب 1 TON).');
+                alert('تأكد من الرصيد (الحد الأدنى للسحب 1 TON).');
             }
         }
     </script>
