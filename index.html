@@ -20,8 +20,8 @@
         .container { width: 100%; max-width: 400px; }
         .header { background: #1e293b; padding: 15px; border-radius: 12px; text-align: center; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         .balance { font-size: 26px; font-weight: bold; color: #4ade80; margin-top: 5px; }
-        .nav-tabs { display: flex; justify-content: space-between; background: #1e293b; padding: 6px; border-radius: 10px; margin-bottom: 15px; gap: 4px; }
-        .nav-tab { background: none; border: none; color: #94a3b8; font-size: 12px; cursor: pointer; padding: 8px 6px; border-radius: 6px; font-weight: bold; flex: 1; text-align: center; }
+        .nav-tabs { display: flex; justify-content: space-between; background: #1e293b; padding: 6px; border-radius: 10px; margin-bottom: 15px; gap: 4px; flex-wrap: wrap; }
+        .nav-tab { background: none; border: none; color: #94a3b8; font-size: 11px; cursor: pointer; padding: 8px 4px; border-radius: 6px; font-weight: bold; flex: 1; min-width: 20%; text-align: center; }
         .nav-tab.active { background: #0088cc; color: white; }
         .section { display: none; }
         .section.active { display: block; }
@@ -45,12 +45,13 @@
             <div id="userDebugId" style="font-size: 11px; color: #64748b; margin-top: 5px;"></div>
         </div>
 
-        <!-- شريط التنقل -->
+        <!-- شريط التنقل يحتوي على زر الإدارة بشكل مباشر -->
         <div class="nav-tabs" id="navTabsContainer">
             <button class="nav-tab active" onclick="switchTab('plans', this)">الخطط</button>
             <button class="nav-tab" onclick="switchTab('deposit', this)">إيداع</button>
             <button class="nav-tab" onclick="switchTab('withdraw', this)">سحب</button>
             <button class="nav-tab" onclick="switchTab('my-investments', this)">استثماراتي</button>
+            <button class="nav-tab" onclick="switchTab('admin-panel', this)" style="background: #0284c7; color: white;">الإدارة</button>
         </div>
 
         <!-- 1. الخطط الاستثمارية -->
@@ -111,15 +112,16 @@
         <div id="admin-panel" class="section">
             <div class="card-box">
                 <div class="plan-title">🛠️ لوحة تحكم الإدارة</div>
+                <div class="plan-details" style="color: #facc15; margin-bottom: 10px;">تحكم في أرصدة المستخدمين وحظرهم</div>
                 <input type="text" id="targetUserId" placeholder="معرف المستخدم (Telegram ID)">
                 <button class="action-btn" onclick="searchUser()">بحث عن المستخدم</button>
 
-                <div id="adminDetails" style="display:none; margin-top:15px;">
+                <div id="adminDetails" style="display:none; margin-top:15px; border-top: 1px solid #334155; padding-top: 10px;">
                     <div class="plan-details" id="userInfoDisplay"></div>
                     <input type="number" id="modAmount" placeholder="المبلغ (للإضافة أو الخصم)">
                     <button class="action-btn" onclick="modifyBalance('add')">➕ إضافة رصيد</button>
-                    <button class="action-btn" style="background-color: #f97316;" onclick="modifyBalance('sub')">➖ خصم رصيد</button>
-                    <button id="banToggleButton" class="action-btn ban-btn" onclick="toggleBanStatus()">حظر المستخدم</button>
+                    <button class="action-btn" style="background-color: #f97316; margin-top: 8px;" onclick="modifyBalance('sub')">➖ خصم رصيد</button>
+                    <button id="banToggleButton" class="action-btn ban-btn" style="margin-top: 8px;" onclick="toggleBanStatus()">حظر المستخدم</button>
                 </div>
             </div>
         </div>
@@ -147,9 +149,7 @@
         let tg = window.Telegram.WebApp;
         tg.expand();
 
-        // جلب معرف المستخدم أو جعله مطابقاً للمسؤول مؤقتاً للتجربة إذا لم يتوفر من تيليجرام
         let userId = tg.initDataUnsafe?.user?.id ? tg.initDataUnsafe.user.id.toString() : ADMIN_ID;
-        
         document.getElementById('userDebugId').innerText = "ID: " + userId;
 
         let userRef = doc(db, "users", userId);
@@ -162,27 +162,9 @@
             let snap = await getDoc(userRef);
             if (snap.exists()) {
                 userData = snap.data();
-                if (userData.isBanned && userId !== ADMIN_ID) {
-                    document.body.innerHTML = "<h2 style='text-align:center; color:red; margin-top:50px;'>عذراً، تم حظر حسابك من قبل الإدارة.</h2>";
-                    return;
-                }
             } else {
                 await setDoc(userRef, userData);
             }
-
-            // إظهار زر الإدارة فوراً لأن المعرف مطابق للمسؤول
-            if (userId === ADMIN_ID) {
-                let tabsContainer = document.getElementById('navTabsContainer');
-                if (!document.getElementById('adminTabBtn')) {
-                    let adminBtn = document.createElement('button');
-                    adminBtn.id = 'adminTabBtn';
-                    adminBtn.className = 'nav-tab';
-                    adminBtn.setAttribute('onclick', "switchTab('admin-panel', this)");
-                    adminBtn.innerText = 'الإدارة';
-                    tabsContainer.appendChild(adminBtn);
-                }
-            }
-
             updateUI();
         }
 
@@ -256,7 +238,7 @@
             }
         }
 
-        // دوال الإدارة والتحكم للمسؤول
+        // دوال الإدارة والتحكم
         window.searchUser = async function() {
             targetId = document.getElementById('targetUserId').value.trim();
             if (!targetId) { alert('الرجاء إدخال معرف المستخدم.'); return; }
@@ -306,7 +288,7 @@
             document.getElementById('modAmount').value = '';
         }
 
-        window.toggleBanStatus = async function5() {
+        window.toggleBanStatus = async function() {
             targetData.isBanned = !targetData.isBanned;
             await updateDoc(doc(db, "users", targetId), { isBanned: targetData.isBanned });
             updateAdminDisplay();
