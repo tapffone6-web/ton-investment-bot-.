@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم المسؤول</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #0f172a; color: #ffffff; padding: 20px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 450px; background: #1e293b; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        h2 { text-align: center; color: #38bdf8; }
+        input { width: 100%; padding: 10px; margin: 10px 0; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 8px; box-sizing: border-box; }
+        button { background-color: #0088cc; color: white; border: none; padding: 10px; font-size: 14px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 5px; }
+        button.ban { background-color: #ef4444; }
+        button.unban { background-color: #22c55e; }
+        .info { background: #0f172a; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 13px; line-height: 1.6; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>لوحة تحكم الإدارة</h2>
+        <input type="text" id="targetUserId" placeholder="أدخل معرف المستخدم (Telegram ID)">
+        <button onclick="searchUser()">بحث عن المستخدم</button>
+
+        <div id="adminPanel" style="display:none; margin-top: 15px;">
+            <div class="info" id="userInfo"></div>
+            
+            <input type="number" id="modAmount" placeholder="المبلغ (للإضافة أو الخصم)">
+            <button onclick="modifyBalance('add')">➕ إضافة رصيد</button>
+            <button onclick="modifyBalance('sub')" style="background-color: #f97316;">➖ خصم رصيد</button>
+            
+            <button id="banBtn" class="ban" onclick="toggleBan()">حظر المستخدم</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyBsztQhY-lC6XWq_khnJyf00NQvGy4-WMo",
+          authDomain: "tonapp-47f88.firebaseapp.com",
+          projectId: "tonapp-47f88",
+          storageBucket: "tonapp-47f88.firebasestorage.app",
+          messagingSenderId: "945046990809",
+          appId: "1:945046990809:web:876d41713631bf0d7873c8",
+          measurementId: "G-YEV69S7SGJ"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let currentTargetId = null;
+        let currentUserData = null;
+
+        window.searchUser = async function() {
+            let id = document.getElementById('targetUserId').value.trim();
+            if (!id) { alert('الرجاء إدخال معرف المستخدم.'); return; }
+
+            currentTargetId = id;
+            let snap = await getDoc(doc(db, "users", id));
+            if (snap.exists()) {
+                currentUserData = snap.data();
+                document.getElementById('adminPanel').style.display = 'block';
+                updatePanelInfo();
+            } else {
+                alert('لم يتم العثور على هذا المستخدم في قاعدة البيانات.');
+                document.getElementById('adminPanel').style.display = 'none';
+            }
+        }
+
+        function updatePanelInfo() {
+            let infoDiv = document.getElementById('userInfo');
+            infoDiv.innerHTML = `
+                <b>معرف المستخدم:</b> ${currentTargetId}<br>
+                <b>الرصيد الحالي:</b> ${(currentUserData.balance || 0).toFixed(2)} TON<br>
+                <b>حالة الحساب:</b> ${currentUserData.isBanned ? '<span style="color:red">محظور</span>' : '<span style="color:green">نشط</span>'}
+            `;
+            let banBtn = document.getElementById('banBtn');
+            if (currentUserData.isBanned) {
+                banBtn.innerText = "إلغاء الحظر";
+                banBtn.className = "unban";
+            } else {
+                banBtn.innerText = "حظر المستخدم";
+                banBtn.className = "ban";
+            }
+        }
+
+        window.modifyBalance = async function(action) {
+            let amt = parseFloat(document.getElementById('modAmount').value);
+            if (!amt || amt <= 0) { alert('أدخل مبلغاً صحيحاً.'); return; }
+
+            if (action === 'add') {
+                currentUserData.balance += amt;
+            } else {
+                if (currentUserData.balance < amt) { alert('رصيد المستخدم لا يكفي للخصم!'); return; }
+                currentUserData.balance -= amt;
+            }
+
+            await updateDoc(doc(db, "users", currentTargetId), { balance: currentUserData.balance });
+            updatePanelInfo();
+            alert('تم تحديث الرصيد بنجاح!');
+            document.getElementById('modAmount').value = '';
+        }
+
+        window.toggleBan = async function() {
+            currentUserData.isBanned = !currentUserData.isBanned;
+            await updateDoc(doc(db, "users", currentTargetId), { isBanned: currentUserData.isBanned });
+            updatePanelInfo();
+            alert(currentUserData.isBanned ? 'تم حظر المستخدم بنجاح.' : 'تم إلغاء حظر المستخدم.');
+        }
+    </script>
+</body>
+</html>
