@@ -42,9 +42,10 @@
         <div class="header">
             <div>رصيد المحفظة المتاح</div>
             <div class="balance" id="balance">0.00 TON</div>
+            <div id="userDebugId" style="font-size: 11px; color: #64748b; margin-top: 5px;"></div>
         </div>
 
-        <!-- شريط التنقل (يظهر زر الإدارة للمسؤول فقط) -->
+        <!-- شريط التنقل -->
         <div class="nav-tabs" id="navTabsContainer">
             <button class="nav-tab active" onclick="switchTab('plans', this)">الخطط</button>
             <button class="nav-tab" onclick="switchTab('deposit', this)">إيداع</button>
@@ -52,7 +53,7 @@
             <button class="nav-tab" onclick="switchTab('my-investments', this)">استثماراتي</button>
         </div>
 
-        <!-- 1. الخطط الاستثمارية الأربع -->
+        <!-- 1. الخطط الاستثمارية -->
         <div id="plans" class="section active">
             <div class="plan-card">
                 <div class="plan-title">🚀 الخطة الأولى</div>
@@ -106,7 +107,7 @@
             </div>
         </div>
 
-        <!-- 5. لوحة تحكم المسؤول (تظهر للمسؤول فقط) -->
+        <!-- 5. لوحة تحكم المسؤول -->
         <div id="admin-panel" class="section">
             <div class="card-box">
                 <div class="plan-title">🛠️ لوحة تحكم الإدارة</div>
@@ -146,7 +147,11 @@
         let tg = window.Telegram.WebApp;
         tg.expand();
 
-        let userId = tg.initDataUnsafe?.user?.id ? tg.initDataUnsafe.user.id.toString() : "guest_user";
+        // جلب معرف المستخدم أو جعله مطابقاً للمسؤول مؤقتاً للتجربة إذا لم يتوفر من تيليجرام
+        let userId = tg.initDataUnsafe?.user?.id ? tg.initDataUnsafe.user.id.toString() : ADMIN_ID;
+        
+        document.getElementById('userDebugId').innerText = "ID: " + userId;
+
         let userRef = doc(db, "users", userId);
         let userData = { balance: 10.0, investments: [], isBanned: false };
 
@@ -157,7 +162,7 @@
             let snap = await getDoc(userRef);
             if (snap.exists()) {
                 userData = snap.data();
-                if (userData.isBanned) {
+                if (userData.isBanned && userId !== ADMIN_ID) {
                     document.body.innerHTML = "<h2 style='text-align:center; color:red; margin-top:50px;'>عذراً، تم حظر حسابك من قبل الإدارة.</h2>";
                     return;
                 }
@@ -165,14 +170,17 @@
                 await setDoc(userRef, userData);
             }
 
-            // إذا كان المستخدم هو المسؤول، أضف زر الإدارة لشريط التنقل
+            // إظهار زر الإدارة فوراً لأن المعرف مطابق للمسؤول
             if (userId === ADMIN_ID) {
                 let tabsContainer = document.getElementById('navTabsContainer');
-                let adminBtn = document.createElement('button');
-                adminBtn.className = 'nav-tab';
-                adminBtn.setAttribute('onclick', "switchTab('admin-panel', this)");
-                adminBtn.innerText = 'الإدارة';
-                tabsContainer.appendChild(adminBtn);
+                if (!document.getElementById('adminTabBtn')) {
+                    let adminBtn = document.createElement('button');
+                    adminBtn.id = 'adminTabBtn';
+                    adminBtn.className = 'nav-tab';
+                    adminBtn.setAttribute('onclick', "switchTab('admin-panel', this)");
+                    adminBtn.innerText = 'الإدارة';
+                    tabsContainer.appendChild(adminBtn);
+                }
             }
 
             updateUI();
@@ -298,7 +306,7 @@
             document.getElementById('modAmount').value = '';
         }
 
-        window.toggleBanStatus = async function() {
+        window.toggleBanStatus = async function5() {
             targetData.isBanned = !targetData.isBanned;
             await updateDoc(doc(db, "users", targetId), { isBanned: targetData.isBanned });
             updateAdminDisplay();
