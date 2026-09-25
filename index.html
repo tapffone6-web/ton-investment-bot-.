@@ -36,6 +36,7 @@
         button.success-btn { background-color: #22c55e; padding: 6px 12px; font-size: 12px; width: auto; display: inline-block; margin-left: 5px; }
         button.danger-btn { background-color: #ef4444; padding: 6px 12px; font-size: 12px; width: auto; display: inline-block; }
         .wallet-address { background: #0f172a; padding: 10px; border-radius: 8px; word-break: break-all; font-size: 12px; color: #facc15; margin: 10px 0; text-align: center; }
+        .status-msg { margin-top: 10px; font-size: 13px; text-align: center; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -88,6 +89,7 @@
                 <div class="wallet-address">UQBxsHgZEAl1KaSi4tMAoguHwksAbwv7ylf99zpp-4wLM2wA</div>
                 <input type="number" id="depAmount" placeholder="أدخل مبلغ الإيداع المحول (TON)">
                 <button class="action-btn" onclick="requestDeposit()">إرسال طلب الإيداع للمراجعة</button>
+                <div id="depStatusMsg" class="status-msg"></div>
             </div>
         </div>
 
@@ -99,6 +101,7 @@
                 <input type="text" id="wdAddress" placeholder="أدخل عنوان محفظتك (TON)">
                 <input type="number" id="wdAmount" placeholder="المبلغ المراد سحبه">
                 <button class="action-btn" onclick="requestWithdraw()">تقديم طلب السحب</button>
+                <div id="wdStatusMsg" class="status-msg"></div>
             </div>
         </div>
 
@@ -234,14 +237,21 @@
             }
         }
 
-        // إرسال طلب إيداع
+        // إرسال طلب إيداع (مع رسالة نصية مباشرة داخل الشاشة)
         window.requestDeposit = async function() {
+            let msgEl = document.getElementById('depStatusMsg');
             let amt = parseFloat(document.getElementById('depAmount').value);
+            
             if (!amt || amt <= 0) {
-                alert('الرجاء إدخال مبلغ صحيح.');
+                msgEl.style.color = '#ef4444';
+                msgEl.innerText = '⚠️ الرجاء إدخال مبلغ صحيح.';
                 return;
             }
+
             try {
+                msgEl.style.color = '#38bdf8';
+                msgEl.innerText = '⏳ جاري إرسال الطلب...';
+
                 await addDoc(collection(db, "deposits"), {
                     userId: userId,
                     amount: amt,
@@ -249,24 +259,36 @@
                 });
                 
                 document.getElementById('depAmount').value = '';
-                alert('✅ تم إرسال طلب الإيداع للمراجعة بنجاح!');
+                msgEl.style.color = '#22c55e';
+                msgEl.innerText = '✅ تم إرسال طلب الإيداع للمراجعة بنجاح!';
                 
                 if (userId === ADMIN_ID) {
                     loadAdminRequests();
                 }
             } catch (error) {
                 console.error("Error adding deposit:", error);
-                alert('حدث خطأ أثناء إرسال الطلب: ' + error.message);
+                msgEl.style.color = '#ef4444';
+                msgEl.innerText = '❌ حدث خطأ أثناء الإرسال.';
             }
         }
 
         // إرسال طلب سحب
         window.requestWithdraw = async function() {
+            let msgEl = document.getElementById('wdStatusMsg');
             let addr = document.getElementById('wdAddress').value;
             let amt = parseFloat(document.getElementById('wdAmount').value);
-            if (!addr) { alert('الرجاء إدخال عنوان المحفظة.'); return; }
+            
+            if (!addr) { 
+                msgEl.style.color = '#ef4444';
+                msgEl.innerText = '⚠️ الرجاء إدخال عنوان المحفظة.'; 
+                return; 
+            }
+            
             if (amt && amt >= 1 && userData.balance >= amt) {
                 try {
+                    msgEl.style.color = '#38bdf8';
+                    msgEl.innerText = '⏳ جاري إرسال طلب السحب...';
+
                     userData.balance -= amt; 
                     await updateDoc(userRef, { balance: userData.balance });
                     await addDoc(collection(db, "withdraws"), {
@@ -276,18 +298,23 @@
                         timestamp: Date.now()
                     });
                     updateUI();
-                    alert('تم تقديم طلب السحب بنجاح!');
+                    
                     document.getElementById('wdAddress').value = '';
                     document.getElementById('wdAmount').value = '';
+                    msgEl.style.color = '#22c55e';
+                    msgEl.innerText = '✅ تم تقديم طلب السحب بنجاح!';
+                    
                     if (userId === ADMIN_ID) {
                         loadAdminRequests();
                     }
                 } catch (error) {
                     console.error("Error adding withdraw:", error);
-                    alert('حدث خطأ أثناء إرسال طلب السحب: ' + error.message);
+                    msgEl.style.color = '#ef4444';
+                    msgEl.innerText = '❌ حدث خطأ أثناء إرسال طلب السحب.';
                 }
             } else {
-                alert('تأكد من رصيدك (الحد الأدنى للسحب 1 TON).');
+                msgEl.style.color = '#ef4444';
+                msgEl.innerText = '⚠️ تأكد من رصيدك (الحد الأدنى للسحب 1 TON).';
             }
         }
 
