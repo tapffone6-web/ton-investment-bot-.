@@ -115,7 +115,6 @@
             <div class="card-box">
                 <div class="plan-title">🛠️ لوحة تحكم الإدارة</div>
                 
-                <!-- قسم إدارة الطلبات المعلقة -->
                 <div style="background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
                     <div style="color: #38bdf8; font-weight: bold; margin-bottom: 8px;">📥 طلبات الإيداع المعلقة:</div>
                     <div id="adminDepositsList" class="plan-details">لا توجد طلبات إيداع جديدة.</div>
@@ -248,8 +247,10 @@
                     amount: amt,
                     timestamp: Date.now()
                 });
-                alert('تم إرسال طلب الإيداع بنجاح، بانتظار موافقة الإدارة.');
+                
                 document.getElementById('depAmount').value = '';
+                alert('✅ تم إرسال طلب الإيداع للمراجعة بنجاح!');
+                
                 if (userId === ADMIN_ID) {
                     loadAdminRequests();
                 }
@@ -293,7 +294,6 @@
         // تحميل طلبات الإيداع والسحب للمسؤول
         async function loadAdminRequests() {
             try {
-                // جلب الإيداعات
                 let depSnap = await getDocs(collection(db, "deposits"));
                 let depListEl = document.getElementById('adminDepositsList');
                 let depHtml = "";
@@ -309,7 +309,6 @@
                 });
                 depListEl.innerHTML = depHtml || "لا توجد طلبات إيداع جديدة.";
 
-                // جلب السحوبات
                 let wdSnap = await getDocs(collection(db, "withdraws"));
                 let wdListEl = document.getElementById('adminWithdrawsList');
                 let wdHtml = "";
@@ -329,7 +328,6 @@
             }
         }
 
-        // معالجة قبول أو رفض الإيداع
         window.handleDeposit = async function(docId, targetUId, amount, isApproved) {
             if (isApproved) {
                 let uSnap = await getDoc(doc(db, "users", targetUId));
@@ -343,7 +341,6 @@
             loadAdminRequests();
         }
 
-        // معالجة قبول أو رفض السحب
         window.handleWithdraw = async function(docId, targetUId, amount, isApproved) {
             if (!isApproved) {
                 let uSnap = await getDoc(doc(db, "users", targetUId));
@@ -357,7 +354,6 @@
             loadAdminRequests();
         }
 
-        // دوال بحث المستخدمين والحظر
         window.searchUser = async function() {
             targetId = document.getElementById('targetUserId').value.trim();
             if (!targetId) { alert('الرجاء إدخال معرف المستخدم.'); return; }
