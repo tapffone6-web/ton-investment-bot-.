@@ -148,7 +148,7 @@
     <!-- ربط Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, deleteDoc, addDoc, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
           apiKey: "AIzaSyBsztQhY-lC6XWq_khnJyf00NQvGy4-WMo",
@@ -161,17 +161,16 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        
-        // تفعيل تخزين الكاش المحلي لتفادي مشاكل انقطاع الاتصال وهمياً في بيئة التيليجرام
-        const db = initializeFirestore(app, {
-            localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()})
-        });
+        const db = getFirestore(app);
 
         const ADMIN_ID = "1985474484";
         let tg = window.Telegram.WebApp;
-        tg.expand();
+        try { tg.expand(); } catch (err) {}
 
-        let userId = tg.initDataUnsafe?.user?.id ? tg.initDataUnsafe.user.id.toString() : ADMIN_ID;
+        let userId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id) 
+            ? tg.initDataUnsafe.user.id.toString() 
+            : ADMIN_ID;
+            
         document.getElementById('userDebugId').innerText = "ID: " + userId;
 
         let userRef = doc(db, "users", userId);
@@ -179,6 +178,17 @@
 
         let targetId = null;
         let targetData = null;
+
+        // دالة تبديل الأقسام (تعلّق التنقل تم إصلاحها بالكامل لتكون فورية)
+        window.switchTab = function(tabId, btn) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            if (btn) btn.classList.add('active');
+            if (tabId === 'admin-panel' && userId === ADMIN_ID) {
+                loadAdminRequests();
+            }
+        };
 
         async function initUser() {
             try {
@@ -188,31 +198,16 @@
                 } else {
                     await setDoc(userRef, userData);
                 }
-                updateUI();
-                if (userId === ADMIN_ID) {
-                    loadAdminRequests();
-                }
             } catch (e) {
                 console.error("Init Error:", e);
-                // في حال فشل القراءة بسبب الشبكة، نقوم بإنشاء حساب افتراضي محلياً لكي لا يتوقف التطبيق
-                updateUI();
-                if (userId === ADMIN_ID) {
-                    loadAdminRequests();
-                }
+            }
+            updateUI();
+            if (userId === ADMIN_ID) {
+                loadAdminRequests();
             }
         }
 
         initUser();
-
-        window.switchTab = function(tabId, btn) {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            btn.classList.add('active');
-            if (tabId === 'admin-panel' && userId === ADMIN_ID) {
-                loadAdminRequests();
-            }
-        }
 
         function updateUI() {
             document.getElementById('balance').innerText = (userData.balance || 0).toFixed(2) + ' TON';
@@ -240,15 +235,15 @@
                 try {
                     await updateDoc(userRef, { balance: userData.balance, investments: userData.investments });
                 } catch (err) {
-                    console.log("Offline mode update saved locally");
+                    console.error("Update plan error:", err);
                 }
                 updateUI();
                 alert('تم تفعيل ' + name + ' بنجاح!');
-                if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
             } else {
                 alert('رصيدك غير كافٍ للاستثمار!');
             }
-        }
+        };
 
         window.requestDeposit = async function() {
             let msgEl = document.getElementById('depStatusMsg');
@@ -280,9 +275,9 @@
             } catch (error) {
                 console.error("Error adding deposit:", error);
                 msgEl.style.color = '#ef4444';
-                msgEl.innerText = '❌ تم حفظ الطلب محلياً وسيتم إرساله عند استقرار الاتصال.';
+                msgEl.innerText = '❌ حدث خطأ أثناء إرسال الطلب.';
             }
-        }
+        };
 
         window.requestWithdraw = async function() {
             let msgEl = document.getElementById('wdStatusMsg');
@@ -301,17 +296,13 @@
                     msgEl.innerText = '⏳ جاري إرسال طلب السحب...';
 
                     userData.balance -= amt; 
-                    try {
-                        await updateDoc(userRef, { balance: userData.balance });
-                        await addDoc(collection(db, "withdraws"), {
-                            userId: userId,
-                            amount: amt,
-                            address: addr,
-                            timestamp: Date.now()
-                        });
-                    } catch(netErr) {
-                        console.log("Saved locally due to network");
-                    }
+                    await updateDoc(userRef, { balance: userData.balance });
+                    await addDoc(collection(db, "withdraws"), {
+                        userId: userId,
+                        amount: amt,
+                        address: addr,
+                        timestamp: Date.now()
+                    });
                     updateUI();
                     
                     document.getElementById('wdAddress').value = '';
@@ -331,12 +322,14 @@
                 msgEl.style.color = '#ef4444';
                 msgEl.innerText = '⚠️ تأكد من رصيدك (الحد الأدنى للسحب 1 TON).';
             }
-        }
+        };
 
         window.loadAdminRequests = async function() {
             let depListEl = document.getElementById('adminDepositsList');
             let wdListEl = document.getElementById('adminWithdrawsList');
             
+            if (!depListEl || !wdListEl) return;
+
             depListEl.innerHTML = "جاري جلب الطلبات...";
             wdListEl.innerHTML = "جاري جلب الطلبات...";
 
@@ -389,7 +382,7 @@
                 depListEl.innerHTML = "لا توجد طلبات معلقة حالياً.";
                 wdListEl.innerHTML = "لا توجد طلبات معلقة حالياً.";
             }
-        }
+        };
 
         window.handleDeposit = async function(docId, targetUId, amount, isApproved) {
             try {
@@ -409,10 +402,10 @@
                 window.loadAdminRequests();
             } catch (err) {
                 console.error("Handle Deposit Error:", err);
-                alert("تم تنفيذ العملية بنجاح.");
+                alert("تم تنفيذ العملية.");
                 window.loadAdminRequests();
             }
-        }
+        };
 
         window.handleWithdraw = async function(docId, targetUId, amount, isApproved) {
             try {
@@ -429,10 +422,10 @@
                 window.loadAdminRequests();
             } catch (err) {
                 console.error("Handle Withdraw Error:", err);
-                alert("تم تنفيذ العملية بنجاح.");
+                alert("تم تنفيذ العملية.");
                 window.loadAdminRequests();
             }
-        }
+        };
 
         window.searchUser = async function() {
             targetId = document.getElementById('targetUserId').value.trim();
@@ -451,7 +444,7 @@
             } catch (err) {
                 alert('خطأ في البحث عن المستخدم.');
             }
-        }
+        };
 
         function updateAdminDisplay() {
             let info = document.getElementById('userInfoDisplay');
@@ -486,8 +479,8 @@
             } catch(e) {}
             updateAdminDisplay();
             alert('تم تعديل الرصيد بنجاح!');
-            document.getElementById('modAmount'].value = '';
-        }
+            document.getElementById('modAmount').value = '';
+        };
 
         window.toggleBanStatus = async function() {
             targetData.isBanned = !targetData.isBanned;
@@ -496,7 +489,7 @@
             } catch(e) {}
             updateAdminDisplay();
             alert(targetData.isBanned ? 'تم حظر المستخدم.' : 'تم إلغاء حظر المستخدم.');
-        }
+        };
     </script>
 </body>
 </html>
