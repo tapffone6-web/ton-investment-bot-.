@@ -33,6 +33,8 @@
         button.action-btn:active { background-color: #006699; }
         button.ban-btn { background-color: #ef4444; }
         button.unban-btn { background-color: #22c55e; }
+        button.success-btn { background-color: #22c55e; padding: 6px 12px; font-size: 12px; width: auto; display: inline-block; margin-left: 5px; }
+        button.danger-btn { background-color: #ef4444; padding: 6px 12px; font-size: 12px; width: auto; display: inline-block; }
         .wallet-address { background: #0f172a; padding: 10px; border-radius: 8px; word-break: break-all; font-size: 12px; color: #facc15; margin: 10px 0; text-align: center; }
     </style>
 </head>
@@ -45,7 +47,7 @@
             <div id="userDebugId" style="font-size: 11px; color: #64748b; margin-top: 5px;"></div>
         </div>
 
-        <!-- شريط التنقل يحتوي على زر الإدارة بشكل مباشر -->
+        <!-- شريط التنقل -->
         <div class="nav-tabs" id="navTabsContainer">
             <button class="nav-tab active" onclick="switchTab('plans', this)">الخطط</button>
             <button class="nav-tab" onclick="switchTab('deposit', this)">إيداع</button>
@@ -82,10 +84,10 @@
         <div id="deposit" class="section">
             <div class="card-box">
                 <div class="plan-title">💳 إيداع عملة TON</div>
-                <div class="plan-details">قم بتحويل المبلغ إلى عنوان المحفظة أدناه:</div>
+                <div class="plan-details">قم بتحويل المبلغ إلى عنوان المحفظة أدناه ثم أرسل طلب الإيداع:</div>
                 <div class="wallet-address">UQA1234567890abcdefTONDepositAddressExample</div>
-                <input type="number" id="depAmount" placeholder="أدخل مبلغ الإيداع (TON)">
-                <button class="action-btn" onclick="requestDeposit()">تأكيد عملية الإيداع</button>
+                <input type="number" id="depAmount" placeholder="أدخل مبلغ الإيداع المحول (TON)">
+                <button class="action-btn" onclick="requestDeposit()">إرسال طلب الإيداع للمراجعة</button>
             </div>
         </div>
 
@@ -96,7 +98,7 @@
                 <div class="plan-details">الحد الأدنى للسحب: 1 TON</div>
                 <input type="text" id="wdAddress" placeholder="أدخل عنوان محفظتك (TON)">
                 <input type="number" id="wdAmount" placeholder="المبلغ المراد سحبه">
-                <button class="action-btn" onclick="requestWithdraw()">طلب السحب</button>
+                <button class="action-btn" onclick="requestWithdraw()">تقديم طلب السحب</button>
             </div>
         </div>
 
@@ -112,7 +114,21 @@
         <div id="admin-panel" class="section">
             <div class="card-box">
                 <div class="plan-title">🛠️ لوحة تحكم الإدارة</div>
-                <div class="plan-details" style="color: #facc15; margin-bottom: 10px;">تحكم في أرصدة المستخدمين وحظرهم</div>
+                
+                <!-- قسم إدارة الطلبات المعلقة -->
+                <div style="background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+                    <div style="color: #38bdf8; font-weight: bold; margin-bottom: 8px;">📥 طلبات الإيداع المعلقة:</div>
+                    <div id="adminDepositsList" class="plan-details">لا توجد طلبات إيداع جديدة.</div>
+                </div>
+
+                <div style="background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+                    <div style="color: #facc15; font-weight: bold; margin-bottom: 8px;">📤 طلبات السحب المعلقة:</div>
+                    <div id="adminWithdrawsList" class="plan-details">لا توجد طلبات سحب جديدة.</div>
+                </div>
+
+                <hr style="border-color: #334155; margin: 15px 0;">
+
+                <div class="plan-title" style="font-size: 14px;">🔍 البحث عن مستخدم وتعديل رصيده</div>
                 <input type="text" id="targetUserId" placeholder="معرف المستخدم (Telegram ID)">
                 <button class="action-btn" onclick="searchUser()">بحث عن المستخدم</button>
 
@@ -130,7 +146,7 @@
     <!-- ربط Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
           apiKey: "AIzaSyBsztQhY-lC6XWq_khnJyf00NQvGy4-WMo",
@@ -153,7 +169,7 @@
         document.getElementById('userDebugId').innerText = "ID: " + userId;
 
         let userRef = doc(db, "users", userId);
-        let userData = { balance: 10.0, investments: [], isBanned: false };
+        let userData = { balance: 0.0, investments: [], isBanned: false };
 
         let targetId = null;
         let targetData = null;
@@ -166,6 +182,9 @@
                 await setDoc(userRef, userData);
             }
             updateUI();
+            if (userId === ADMIN_ID) {
+                loadAdminRequests();
+            }
         }
 
         initUser();
@@ -175,6 +194,9 @@
             document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             btn.classList.add('active');
+            if (tabId === 'admin-panel' && userId === ADMIN_ID) {
+                loadAdminRequests();
+            }
         }
 
         function updateUI() {
@@ -209,36 +231,110 @@
             }
         }
 
+        // إرسال طلب إيداع
         window.requestDeposit = async function() {
             let amt = parseFloat(document.getElementById('depAmount').value);
             if (amt && amt > 0) {
-                userData.balance += amt;
-                await updateDoc(userRef, { balance: userData.balance });
-                updateUI();
-                alert('تم إيداع ' + amt + ' TON بنجاح!');
+                await addDoc(collection(db, "deposits"), {
+                    userId: userId,
+                    amount: amt,
+                    timestamp: Date.now()
+                });
+                alert('تم إرسال طلب الإيداع بنجاح، بانتظار موافقة الإدارة.');
                 document.getElementById('depAmount').value = '';
             } else {
                 alert('الرجاء إدخال مبلغ صحيح.');
             }
         }
 
+        // إرسال طلب سحب
         window.requestWithdraw = async function() {
             let addr = document.getElementById('wdAddress').value;
             let amt = parseFloat(document.getElementById('wdAmount').value);
             if (!addr) { alert('الرجاء إدخال عنوان المحفظة.'); return; }
             if (amt && amt >= 1 && userData.balance >= amt) {
-                userData.balance -= amt;
+                userData.balance -= amt; // خصم مؤقت لمنع التلاعب لحين الموافقة أو الرفض
                 await updateDoc(userRef, { balance: userData.balance });
+                await addDoc(collection(db, "withdraws"), {
+                    userId: userId,
+                    amount: amt,
+                    address: addr,
+                    timestamp: Date.now()
+                });
                 updateUI();
                 alert('تم تقديم طلب السحب بنجاح!');
                 document.getElementById('wdAddress').value = '';
                 document.getElementById('wdAmount').value = '';
             } else {
-                alert('تأكد من الرصيد (الحد الأدنى للسحب 1 TON).');
+                alert('تأكد من رصيدك (الحد الأدنى للسحب 1 TON).');
             }
         }
 
-        // دوال الإدارة والتحكم
+        // تحميل طلبات الإيداع والسحب للمسؤول
+        async function loadAdminRequests() {
+            // جلب الإيداعات
+            let depSnap = await getDocs(collection(db, "deposits"));
+            let depListEl = document.getElementById('adminDepositsList');
+            let depHtml = "";
+            depSnap.forEach((docSnap) => {
+                let d = docSnap.data();
+                depHtml += `
+                    <div style="border-bottom: 1px solid #334155; padding-bottom: 6px; margin-bottom: 6px;">
+                        المستخدم: <b>${d.userId}</b><br>المبلغ: <b>${d.amount} TON</b><br>
+                        <button class="action-btn success-btn" onclick="handleDeposit('${docSnap.id}', '${d.userId}', ${d.amount}, true)">قبول</button>
+                        <button class="action-btn danger-btn" onclick="handleDeposit('${docSnap.id}', '${d.userId}', ${d.amount}, false)">رفض</button>
+                    </div>
+                `;
+            });
+            depListEl.innerHTML = depHtml || "لا توجد طلبات إيداع جديدة.";
+
+            // جلب السحوبات
+            let wdSnap = await getDocs(collection(db, "withdraws"));
+            let wdListEl = document.getElementById('adminWithdrawsList');
+            let wdHtml = "";
+            wdSnap.forEach((docSnap) => {
+                let w = docSnap.data();
+                wdHtml += `
+                    <div style="border-bottom: 1px solid #334155; padding-bottom: 6px; margin-bottom: 6px;">
+                        المستخدم: <b>${w.userId}</b><br>المبلغ: <b>${w.amount} TON</b><br>العنوان: <span style="color:#facc15">${w.address}</span><br>
+                        <button class="action-btn success-btn" onclick="handleWithdraw('${docSnap.id}', '${w.userId}', ${w.amount}, true)">قبول</button>
+                        <button class="action-btn danger-btn" onclick="handleWithdraw('${docSnap.id}', '${w.userId}', ${w.amount}, false)">رفض</button>
+                    </div>
+                `;
+            });
+            wdListEl.innerHTML = wdHtml || "لا توجد طلبات سحب جديدة.";
+        }
+
+        // معالجة قبول أو رفض الإيداع
+        window.handleDeposit = async function(docId, targetUId, amount, isApproved) {
+            if (isApproved) {
+                let uSnap = await getDoc(doc(db, "users", targetUId));
+                if (uSnap.exists()) {
+                    let newBal = (uSnap.data().balance || 0) + amount;
+                    await updateDoc(doc(db, "users", targetUId), { balance: newBal });
+                }
+            }
+            await deleteDoc(doc(db, "deposits", docId));
+            alert(isApproved ? 'تم قبول الإيداع وإضافة الرصيد للمستخدم.' : 'تم رفض الإيداع.');
+            loadAdminRequests();
+        }
+
+        // معالجة قبول أو رفض السحب
+        window.handleWithdraw = async function(docId, targetUId, amount, isApproved) {
+            if (!isApproved) {
+                // إذا تم الرفض، نعيد المبلغ لرصيد المستخدم
+                let uSnap = await getDoc(doc(db, "users", targetUId));
+                if (uSnap.exists()) {
+                    let newBal = (uSnap.data().balance || 0) + amount;
+                    await updateDoc(doc(db, "users", targetUId), { balance: newBal });
+                }
+            }
+            await deleteDoc(doc(db, "withdraws", docId));
+            alert(isApproved ? 'تم قبول طلب السحب.' : 'تم رفض السحب وإرجاع المبلغ للمستخدم.');
+            loadAdminRequests();
+        }
+
+        // دوال بحث المستخدمين والحظر
         window.searchUser = async function() {
             targetId = document.getElementById('targetUserId').value.trim();
             if (!targetId) { alert('الرجاء إدخال معرف المستخدم.'); return; }
